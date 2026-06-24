@@ -1169,7 +1169,7 @@
             <div class="chart-title">
               <div>
                 <h2>Contratados Inbound por unidade</h2>
-                <p>Vagas fechadas por Inbound em cada unidade — qtd e % do total Inbound.</p>
+                <p>Fonte: KPI´s de Canais do Inbound. Consultorias = EasyHire + Foursales (a planilha não os separa).</p>
               </div>
             </div>
             <div class="chart-box"><canvas id="unitChart"></canvas></div>
@@ -1835,6 +1835,23 @@
       }).filter(row => row.inbound || row.tfc || row.share);
     }
 
+    // Contratados Inbound por unidade vindos da aba "KPI´s de Canais do Inbound"
+    // (linhas "Contratados <unidade> - Inbound"). Observação: o canais agrupa
+    // EasyHire + Foursales como "Consultorias" (não é possível separá-los por aqui).
+    function inboundHiresByUnitFromKpi(month = state.selectedMonth) {
+      const canais = state.sheets.canais;
+      const defs = [
+        { label: "Salesjobs", kpi: "Contratados SJ - Inbound" },
+        { label: "Consultorias (EH + FS)", kpi: "Contratados Consultorias - Inbound" },
+        { label: "RPO", kpi: "Contratados RPO - Inbound" },
+        { label: "RH Interno", kpi: "Contratados TFC - RH - Inbound" }
+      ];
+      return defs
+        .map(d => ({ label: d.label, value: kpiValue(canais, d.kpi, month) }))
+        .filter(d => d.value > 0)
+        .sort((a, b) => b.value - a.value);
+    }
+
     function calculateTradPaidApplicantsTrend() {
       // Média de aplicantes de mídia paga POR VAGA (aba KPI´s de Canais do Inbound)
       return getMonthColumns(state.sheets.canais).map(item => ({
@@ -2136,12 +2153,12 @@
         scales: { x: { beginAtZero: true, grid: { color: "#eef2f6" } }, y: { grid: { display: false } } }
       });
 
-      const unitLabels = Object.keys(data.inboundHiresByUnit).sort((a, b) => data.inboundHiresByUnit[b] - data.inboundHiresByUnit[a]);
-      const unitColors = ["#011E41", "#ea083d", "#2F6FEA", "#A1C5F7", "#2ecc71", "#CE0E2D", "#8F8F8F"];
-      const totalInboundHires = data.originCounts.inbound;
+      const unitStats = inboundHiresByUnitFromKpi();
+      const unitColors = ["#011E41", "#CE0E2D", "#2F6FEA", "#A1C5F7", "#2ecc71", "#8F8F8F"];
+      const unitTotal = unitStats.reduce((sum, u) => sum + u.value, 0);
       makeChart("unitChart", "bar", {
-        labels: unitLabels.map(label => `${label} (${fmtOne.format(pct(data.inboundHiresByUnit[label], totalInboundHires))}%)`),
-        datasets: [{ label: "Contratados Inbound", data: unitLabels.map(label => data.inboundHiresByUnit[label]), backgroundColor: unitLabels.map((_, i) => unitColors[i % unitColors.length]), borderRadius: 6 }]
+        labels: unitStats.map(u => `${u.label} (${fmtOne.format(pct(u.value, unitTotal))}%)`),
+        datasets: [{ label: "Contratados Inbound", data: unitStats.map(u => u.value), backgroundColor: unitStats.map((_, i) => unitColors[i % unitColors.length]), borderRadius: 6 }]
       }, {
         indexAxis: "y",
         plugins: {
@@ -2149,9 +2166,8 @@
           tooltip: {
             callbacks: {
               label(context) {
-                const unit = unitLabels[context.dataIndex];
-                const qty = data.inboundHiresByUnit[unit];
-                return `${fmtInt.format(qty)} contratados Inbound (${fmtOne.format(pct(qty, totalInboundHires))}% do Inbound)`;
+                const u = unitStats[context.dataIndex];
+                return `${fmtInt.format(u.value)} contratados Inbound (${fmtOne.format(pct(u.value, unitTotal))}% do Inbound)`;
               }
             }
           }
