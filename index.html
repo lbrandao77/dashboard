@@ -1181,7 +1181,7 @@
         <section class="refresh-footer">
           <div class="refresh-copy">
             <h2>Atualizar dados do dashboard</h2>
-            <p id="refreshFooterStatus">Os dados são carregados da planilha somente quando você clica em atualizar.</p>
+            <p id="refreshFooterStatus">O dashboard mostra os últimos dados sincronizados. Clique para atualizar com os dados mais recentes da planilha.</p>
           </div>
           <button class="btn-refresh" id="refreshButtonBottom" type="button">
             <i data-lucide="refresh-cw"></i>
@@ -2192,6 +2192,36 @@
       return new Date().toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
     }
 
+    const CACHE_KEY = "tfc_dashboard_cache_v1";
+
+    function dateLabel(ts) {
+      return new Date(ts).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+
+    function saveCache(savedAt) {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          savedAt,
+          selectedMonth: state.selectedMonth,
+          sheets: state.sheets
+        }));
+      } catch (e) {
+        // localStorage pode estar cheio ou desabilitado; o app segue funcionando sem cache.
+      }
+    }
+
+    function loadCache() {
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.sheets || !parsed.sheets.dados) return null;
+        return parsed;
+      } catch (e) {
+        return null;
+      }
+    }
+
     let isLoading = false;
     async function load() {
       if (isLoading) return;
@@ -2217,10 +2247,12 @@
         state.sheets = { geral, canais, dados, inbound };
         populateMonths();
         render();
+        const savedAt = Date.now();
+        saveCache(savedAt);
         const totalRows = Object.values(state.sheets).reduce((sum, rows) => sum + rows.length, 0);
         status.querySelector(".dot").className = "dot ok";
-        status.querySelector("span:last-child").textContent = `Dados atualizados em ${nowLabel()} - ${totalRows} linhas lidas.`;
-        setFooterStatus(`Última atualização: ${nowLabel()}. Clique para buscar os dados mais recentes da planilha.`);
+        status.querySelector("span:last-child").textContent = `Dados sincronizados em ${dateLabel(savedAt)} - ${totalRows} linhas lidas.`;
+        setFooterStatus(`Última sincronização: ${dateLabel(savedAt)}. Clique para buscar os dados mais recentes da planilha.`);
       } catch (error) {
         status.querySelector(".dot").className = "dot error";
         status.querySelector("span:last-child").textContent = "Falha ao carregar dados.";
@@ -2267,9 +2299,22 @@
 
     window.addEventListener("DOMContentLoaded", () => {
       if (window.lucide) window.lucide.createIcons();
-      const status = document.getElementById("loadStatus");
-      status.querySelector(".dot").className = "dot";
-      status.querySelector("span:last-child").textContent = "Clique em Atualizar para carregar os dados da planilha.";
+
+      // Sempre mostra os últimos dados sincronizados (cache local). O botão Atualizar
+      // apenas busca dados novos e substitui o cache. Só busca automático na 1ª visita.
+      const cached = loadCache();
+      if (cached) {
+        state.sheets = cached.sheets;
+        state.selectedMonth = cached.selectedMonth || "Todos";
+        populateMonths();
+        render();
+        const status = document.getElementById("loadStatus");
+        status.querySelector(".dot").className = "dot ok";
+        status.querySelector("span:last-child").textContent = `Mostrando dados de ${dateLabel(cached.savedAt)} - clique em Atualizar para sincronizar.`;
+        setFooterStatus(`Última sincronização: ${dateLabel(cached.savedAt)}. Clique para buscar os dados mais recentes da planilha.`);
+      } else {
+        load();
+      }
     });
   </script>
 </body>
