@@ -922,6 +922,16 @@
               <option value="Todos">Todos os meses</option>
             </select>
           </label>
+          <label class="select-wrap">
+            <span>Produto</span>
+            <select id="productFilter" aria-label="Filtrar por produto">
+              <option value="total">Todos os produtos</option>
+              <option value="Executive Search">Executive Search</option>
+              <option value="Plus">Plus</option>
+              <option value="Standard">Standard</option>
+              <option value="RH Interno">RH Interno</option>
+            </select>
+          </label>
           <button class="icon-btn" id="refreshButton" title="Atualizar dados" aria-label="Atualizar dados">
             <i data-lucide="refresh-cw"></i>
           </button>
@@ -992,17 +1002,7 @@
           <div class="chart-title">
             <div>
               <h2>% de fechamentos Inbound no ano</h2>
-              <p>Participação mensal de Inbound dentro das vagas fechadas pela TFC.</p>
-            </div>
-            <div class="chart-actions">
-              <label for="productFilter">Produto</label>
-              <select id="productFilter" aria-label="Filtrar gráfico por produto">
-                <option value="total">Todos</option>
-                <option value="Executive Search">Executive Search</option>
-                <option value="Standard">Standard</option>
-                <option value="Plus">Plus</option>
-                <option value="RH Interno">RH Interno</option>
-              </select>
+              <p>Participação mensal de Inbound dentro das vagas fechadas pela TFC. Use o filtro de Produto no topo.</p>
             </div>
           </div>
           <div class="chart-box"><canvas id="inboundShareChart"></canvas></div>
@@ -1796,18 +1796,39 @@
       return `${base}${config.suffix}`;
     }
 
-    function indicationCountFromDados(month = state.selectedMonth) {
-      const rows = state.sheets.dados ? state.sheets.dados.slice(2) : [];
-      return filterByMonth(rows, "dados").filter(row => normalize(row[55]).includes("indicacao")).length;
+    function productMatches(row, product = state.selectedProduct) {
+      if (!product || product === "total") return true;
+      return normalize(row[4]) === normalize(product);
     }
 
-    function closureMetrics(month = state.selectedMonth) {
-      const tfc = kpiMetric(state.sheets.canais, "Vagas fechadas por TFC", month);
-      const inbound = kpiMetric(state.sheets.canais, "Vagas fechadas por Inbound", month);
-      const hunting = kpiMetric(state.sheets.canais, "Vagas fechadas por captação", month);
-      const huntingValue = hunting.value || Math.max(0, tfc.value - inbound.value);
+    function indicationCountFromDados(month = state.selectedMonth, product = state.selectedProduct) {
+      const rows = state.sheets.dados ? state.sheets.dados.slice(2) : [];
+      return filterByMonth(rows, "dados")
+        .filter(row => productMatches(row, product))
+        .filter(row => normalize(row[55]).includes("indicacao")).length;
+    }
+
+    // Contratados Inbound por canal (e total de hunting) filtrados por mês E produto,
+    // a partir da aba de vagas. Usado nos KPIs da 1ª página que respondem ao filtro de produto.
+    function inboundHiresFiltered(month = state.selectedMonth, product = state.selectedProduct) {
+      const rows = state.sheets.dados ? state.sheets.dados.slice(2) : [];
+      const filtered = filterByMonth(rows, "dados").filter(row => productMatches(row, product));
+      const byChannel = {};
+      let hunting = 0;
+      filtered.forEach(row => {
+        const type = classifyOrigin(row[55]);
+        if (type.group === "inbound") byChannel[type.channel] = (byChannel[type.channel] || 0) + 1;
+        else if (type.group === "hunting") hunting += 1;
+      });
+      return { byChannel, hunting };
+    }
+
+    function closureMetrics(month = state.selectedMonth, product = state.selectedProduct) {
+      const tfc = kpiMetric(state.sheets.canais, strategicLabel("Vagas fechadas por TFC", product), month);
+      const inbound = kpiMetric(state.sheets.canais, strategicLabel("Vagas fechadas por Inbound", product), month);
+      const huntingValue = Math.max(0, tfc.value - inbound.value);
       const operativeTotal = inbound.value + huntingValue;
-      const indicationValue = indicationCountFromDados(month);
+      const indicationValue = indicationCountFromDados(month, product);
       return {
         tfc: tfc.value,
         inbound: inbound.value,
@@ -2086,7 +2107,12 @@
       setText("sideAvgPaidCost", fmtMoney.format(data.avgPaidCost));
       setText("sideCancelRate", `${fmtOne.format(pct(data.cancelled, data.closed))}%`);
 
-      const hireStats = data.channelStats.filter(c => c.hires > 0).sort((a, b) => b.hires - a.hires);
+      // Contratados por canal respeitam o filtro de produto (não-financeiro)
+      const filteredHires = inboundHiresFiltered();
+      const hireStats = CHANNELS
+        .map(c => ({ label: c.label, color: c.color, hires: filteredHires.byChannel[c.label] || 0 }))
+        .filter(c => c.hires > 0)
+        .sort((a, b) => b.hires - a.hires);
 
       const inboundChannelsEl = document.getElementById("kpiInboundChannels");
       if (inboundChannelsEl) {
@@ -2108,7 +2134,7 @@
         labels: [...hireStats.map(c => c.label), "Hunting"],
         datasets: [{
           label: "Contratados",
-          data: [...hireStats.map(c => c.hires), data.originCounts.hunting],
+          data: [...hireStats.map(c => c.hires), filteredHires.hunting],
           backgroundColor: [...hireStats.map(c => c.color), "#011E41"],
           borderRadius: 6
         }]
@@ -2321,7 +2347,7 @@
 
     document.getElementById("productFilter").addEventListener("change", event => {
       state.selectedProduct = event.target.value;
-      renderPriorityMetrics();
+      render();
     });
 
     document.getElementById("listProductFilter").addEventListener("change", event => {
