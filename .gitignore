@@ -1,0 +1,11 @@
+# Apresentação fonte (pesada, não vai para o deploy)
+*.pdf
+
+# Dados locais em cache (o dashboard busca ao vivo do Google Sheets)
+*.csv
+
+# Dependências / artefatos
+node_modules/
+.vercel/
+.DS_Store
+Thumbs.db

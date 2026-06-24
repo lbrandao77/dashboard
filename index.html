@@ -1,0 +1,2276 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Indicadores de Fechamento Mensal de Inbound</title>
+  <link rel="icon" sizes="192x192" href="https://static.wixstatic.com/media/6ca426_68e823d8e81f4fa79f064e2e825547a2%7Emv2.png/v1/fill/w_192%2Ch_192%2Clg_1%2Cusm_0.66_1.00_0.01/6ca426_68e823d8e81f4fa79f064e2e825547a2%7Emv2.png" type="image/png">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      /* The Foursales Company - identidade visual */
+      --bg: #f3f5f9;
+      --surface: #ffffff;
+      --surface-2: #edf0f5;
+      --ink: #011E41;
+      --muted: #5b6880;
+      --line: #dde3ec;
+      --navy: #011E41;
+      --navy-2: #051530;
+      --red: #CE0E2D;
+      --red-2: #A40A23;
+      --blue: #2F6FEA;
+      --ice: #9fb6d8;
+      --amber: #E8BAB0;
+      --silver: #EDEDED;
+      --green: #2ecc71;
+      --radius: 14px;
+      --shadow: 0 16px 40px rgba(1, 30, 65, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(1, 30, 65, 0.05), rgba(1, 30, 65, 0) 280px),
+        var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, select {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .topbar {
+      background:
+        radial-gradient(120% 160% at 100% 0%, rgba(206, 14, 45, 0.32), rgba(206, 14, 45, 0) 46%),
+        linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+      color: #fff;
+      padding: 18px 28px 24px;
+      border-bottom: 5px solid var(--red);
+    }
+
+    .topbar-inner {
+      max-width: 1500px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+      overflow: hidden;
+    }
+
+    .brand-mark img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+
+    .eyebrow {
+      color: var(--ice);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 38px);
+      line-height: 1.1;
+      letter-spacing: 0;
+      font-weight: 900;
+    }
+
+    .title-block p {
+      margin: 8px 0 0;
+      color: rgba(255, 255, 255, 0.76);
+      max-width: 760px;
+      font-size: 15px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .select-wrap {
+      display: grid;
+      gap: 5px;
+      min-width: 180px;
+    }
+
+    .select-wrap span {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    select, .icon-btn {
+      height: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-radius: 8px;
+      padding: 0 12px;
+    }
+
+    select option {
+      color: var(--ink);
+    }
+
+    .icon-btn {
+      width: 42px;
+      display: inline-grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background 160ms ease, transform 160ms ease;
+    }
+
+    .icon-btn:hover {
+      background: var(--red);
+      transform: translateY(-1px);
+    }
+
+    .tabs {
+      background: rgba(255, 255, 255, 0.94);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      backdrop-filter: blur(10px);
+    }
+
+    .tabs-inner {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 0 28px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+
+    .tab-button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      min-height: 54px;
+      padding: 0 12px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .tab-button[aria-selected="true"] {
+      color: var(--ink);
+      border-color: var(--red);
+    }
+
+    main {
+      max-width: 1500px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 28px 42px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.14);
+    }
+
+    .dot.ok { background: var(--green); box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.15); }
+    .dot.error { background: var(--red); box-shadow: 0 0 0 4px rgba(206, 14, 45, 0.16); }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      min-height: 116px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .kpi::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--red);
+    }
+
+    .kpi strong {
+      font-size: clamp(22px, 1.8vw, 31px);
+      line-height: 1;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .kpi span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .kpi small {
+      color: var(--red-2);
+      font-weight: 800;
+      font-size: 11.5px;
+      line-height: 1.35;
+    }
+
+    .kpi-breakdown {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .kpi-breakdown span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface-2);
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .kpi-breakdown span b {
+      color: var(--red-2);
+      font-weight: 900;
+    }
+
+    .executive-priority {
+      display: grid;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .exec-top {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 16px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .exec-top .kpi-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-bottom: 0;
+    }
+
+    .exec-top .closure-panel {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .exec-top .closure-panel .chart-box {
+      flex: 1;
+      height: auto;
+      min-height: 220px;
+    }
+
+    .line-focus {
+      margin-bottom: 18px;
+    }
+
+    .exec-charts {
+      grid-template-columns: 1.5fr 1fr;
+    }
+
+    .focus-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .focus-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 13px 14px;
+      min-height: 104px;
+      display: grid;
+      align-content: space-between;
+      gap: 10px;
+      box-shadow: var(--shadow);
+    }
+
+    .focus-card.primary {
+      min-height: 104px;
+      border-color: rgba(206, 14, 45, 0.24);
+    }
+
+    .focus-card span,
+    .metric-board .kicker {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .focus-card strong {
+      font-size: clamp(24px, 2.4vw, 34px);
+      line-height: 0.95;
+      letter-spacing: 0;
+      font-weight: 900;
+    }
+
+    .focus-card small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .priority-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .closure-overview {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .closure-overview .focus-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-content: start;
+    }
+
+    .closure-overview .chart-panel {
+      min-height: 260px;
+      padding: 16px;
+    }
+
+    .closure-overview .chart-box {
+      height: 205px;
+    }
+
+    .metric-board {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      min-height: 360px;
+    }
+
+    .metric-board header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .metric-board h2 {
+      margin: 6px 0 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .metric-list {
+      display: grid;
+      gap: 2px;
+    }
+
+    .metric-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric-item:last-child {
+      border-bottom: 0;
+    }
+
+    .metric-name {
+      min-width: 0;
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .metric-value {
+      text-align: right;
+      font-size: 15px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .metric-sub {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .line-focus {
+      min-height: 460px;
+      grid-column: 1 / -1;
+    }
+
+    .line-focus .chart-box {
+      height: 390px;
+    }
+
+    .line-focus .chart-title h2 {
+      font-size: 22px;
+    }
+
+    .chart-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chart-actions label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .chart-actions select {
+      min-width: 190px;
+      color: var(--ink);
+      background: #fff;
+      border-color: var(--line);
+    }
+
+    .chart-actions input[type="search"] {
+      height: 40px;
+      min-width: 240px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 0 12px;
+    }
+
+    .list-toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .inbound-list .chart-title {
+      flex-wrap: wrap;
+    }
+
+    .list-field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .list-field > span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .list-field select,
+    .list-field input[type="search"] {
+      height: 40px;
+      min-width: 210px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 0 12px;
+    }
+
+    @media (max-width: 760px) {
+      .list-toolbar { width: 100%; }
+      .list-field { width: 100%; }
+      .list-field select,
+      .list-field input[type="search"] { width: 100%; min-width: 0; }
+    }
+
+    .inbound-list-summary {
+      display: grid;
+      grid-template-columns: 1fr 2.6fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .product-breakdown-card .kpi-breakdown span {
+      font-size: 12.5px;
+      padding: 4px 10px;
+    }
+
+    .secondary-overview {
+      margin-top: 0;
+    }
+
+    .inbound-list {
+      margin-top: 16px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 20px 0 12px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .section-heading p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 1.35fr 1fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .chart-panel, .table-panel, .insight-panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      min-height: 320px;
+    }
+
+    .chart-panel.wide {
+      grid-column: span 2;
+    }
+
+    .chart-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .chart-title h2 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .chart-title p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .chart-box {
+      position: relative;
+      height: 270px;
+      width: 100%;
+    }
+
+    .chart-box.tall {
+      height: 360px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric-row {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      background: #fbfcfe;
+    }
+
+    .metric-row span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric-row strong {
+      font-size: 18px;
+      text-align: right;
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 10px 11px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--navy);
+      background: var(--surface-2);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      position: sticky;
+      top: 54px;
+      z-index: 2;
+    }
+
+    td.num, th.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .table-scroll {
+      max-height: 520px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: rgba(206, 14, 45, 0.10);
+      color: var(--red-2);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .error-box {
+      display: none;
+      background: #fff1f2;
+      color: #9f1239;
+      border: 1px solid #fecdd3;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      font-size: 14px;
+    }
+
+    .error-box.visible {
+      display: block;
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, #edf2f7, #f8fafc, #edf2f7);
+      background-size: 220% 100%;
+      animation: shimmer 1.2s infinite;
+      color: transparent !important;
+      border-radius: 6px;
+    }
+
+    .refresh-footer {
+      margin-top: 26px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        radial-gradient(120% 180% at 100% 0%, rgba(206, 14, 45, 0.30), rgba(206, 14, 45, 0) 50%),
+        linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow);
+    }
+
+    .refresh-footer .refresh-copy h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .refresh-footer .refresh-copy p {
+      margin: 6px 0 0;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 13px;
+      max-width: 560px;
+    }
+
+    .btn-refresh {
+      appearance: none;
+      cursor: pointer;
+      border: 0;
+      border-radius: 10px;
+      background: var(--red);
+      color: #fff;
+      font-weight: 850;
+      font-size: 14px;
+      letter-spacing: 0.01em;
+      padding: 0 22px;
+      height: 48px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 12px 26px rgba(206, 14, 45, 0.32);
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      white-space: nowrap;
+    }
+
+    .btn-refresh:hover {
+      transform: translateY(-1px);
+      background: #e21134;
+      box-shadow: 0 16px 30px rgba(206, 14, 45, 0.4);
+    }
+
+    .btn-refresh:active { transform: translateY(0); }
+    .btn-refresh:disabled { opacity: 0.6; cursor: progress; transform: none; }
+    .btn-refresh i { width: 18px; height: 18px; }
+    .btn-refresh.loading i { animation: spin 0.9s linear infinite; }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes shimmer {
+      from { background-position: 220% 0; }
+      to { background-position: -220% 0; }
+    }
+
+    @media (max-width: 1180px) {
+      .focus-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .priority-grid { grid-template-columns: 1fr 1fr; }
+      .closure-overview { grid-template-columns: 1fr; }
+      .exec-top { grid-template-columns: 1fr; }
+      .exec-charts { grid-template-columns: 1fr; }
+      .priority-grid .line-focus { grid-column: 1 / -1; }
+      .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .dashboard-grid { grid-template-columns: 1fr 1fr; }
+      .dashboard-grid .chart-panel.wide { grid-column: 1 / -1; }
+      .insight-panel { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 760px) {
+      .topbar-inner { align-items: flex-start; flex-direction: column; }
+      .toolbar { justify-content: flex-start; width: 100%; }
+      main, .tabs-inner { padding-left: 16px; padding-right: 16px; }
+      .topbar { padding: 20px 16px; }
+      .focus-grid, .priority-grid { grid-template-columns: 1fr; }
+      .closure-overview { grid-template-columns: 1fr; }
+      .exec-top, .exec-charts { grid-template-columns: 1fr; }
+      .kpi-grid, .dashboard-grid, .analysis-grid { grid-template-columns: 1fr; }
+      .inbound-list-summary { grid-template-columns: 1fr; }
+      .chart-panel.wide, .full, .insight-panel { grid-column: auto; }
+      .chart-box, .chart-box.tall { height: 300px; }
+      th { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <img src="https://static.wixstatic.com/media/6ca426_68e823d8e81f4fa79f064e2e825547a2%7Emv2.png/v1/fill/w_192%2Ch_192%2Clg_1%2Cusm_0.66_1.00_0.01/6ca426_68e823d8e81f4fa79f064e2e825547a2%7Emv2.png" alt="">
+          </div>
+          <div class="title-block">
+            <div class="eyebrow">The Foursales Company</div>
+            <h1>Indicadores de Fechamento Mensal de Inbound</h1>
+            <p>Performance de canais, origem de contratados, tempos, custos e presença de divulgações nos projetos de vagas da TFC.</p>
+          </div>
+        </div>
+        <div class="toolbar">
+          <label class="select-wrap">
+            <span>Periodo</span>
+            <select id="monthSelect" aria-label="Selecionar periodo">
+              <option value="Todos">Todos os meses</option>
+            </select>
+          </label>
+          <button class="icon-btn" id="refreshButton" title="Atualizar dados" aria-label="Atualizar dados">
+            <i data-lucide="refresh-cw"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Abas do dashboard">
+      <div class="tabs-inner">
+        <button class="tab-button" data-tab="executive" aria-selected="true">Visão principal</button>
+        <button class="tab-button" data-tab="inboundList" aria-selected="false">Vagas fechadas por Inbound</button>
+        <button class="tab-button" data-tab="analysis" aria-selected="false">Análise detalhada</button>
+      </div>
+    </nav>
+
+    <main>
+      <div class="status" id="loadStatus">
+        <span class="dot"></span>
+        <span>Carregando dados da planilha...</span>
+      </div>
+      <div class="error-box" id="errorBox"></div>
+
+      <section class="panel active" id="executive">
+        <div class="section-heading">
+          <div>
+            <h2>Indicadores executivos</h2>
+            <p>Contratações TFC, Inbound, Hunting e Indicação.</p>
+          </div>
+        </div>
+
+        <div class="exec-top">
+          <div class="kpi-grid secondary-overview">
+            <article class="kpi">
+              <span>Contratados TFC</span>
+              <strong id="kpiTfc" class="skeleton">0</strong>
+              <small id="kpiTfcShare">Operação sem indicações</small>
+            </article>
+            <article class="kpi">
+              <span>Contratados Inbound</span>
+              <strong id="kpiInbound" class="skeleton">0</strong>
+              <small id="kpiInboundShare">Origem dos contratados</small>
+              <div class="kpi-breakdown" id="kpiInboundChannels"></div>
+            </article>
+            <article class="kpi">
+              <span>Contratados Hunting</span>
+              <strong id="kpiHunting" class="skeleton">0</strong>
+              <small id="kpiHuntingShare">Captação ativa</small>
+            </article>
+            <article class="kpi">
+              <span>Contratados Indicação</span>
+              <strong id="kpiIndication" class="skeleton">0</strong>
+              <small id="kpiIndicationShare">Indicações separadas</small>
+            </article>
+          </div>
+
+          <section class="chart-panel closure-panel">
+            <div class="chart-title">
+              <div>
+                <h2>Mix de fechamento</h2>
+                <p>Percentual calculado apenas entre Inbound e Hunting.</p>
+              </div>
+            </div>
+            <div class="chart-box"><canvas id="closureDonutChart"></canvas></div>
+          </section>
+        </div>
+
+        <section class="chart-panel line-focus">
+          <div class="chart-title">
+            <div>
+              <h2>% de fechamentos Inbound no ano</h2>
+              <p>Participação mensal de Inbound dentro das vagas fechadas pela TFC.</p>
+            </div>
+            <div class="chart-actions">
+              <label for="productFilter">Produto</label>
+              <select id="productFilter" aria-label="Filtrar gráfico por produto">
+                <option value="total">Todos</option>
+                <option value="Executive Search">Executive Search</option>
+                <option value="Standard">Standard</option>
+                <option value="Plus">Plus</option>
+                <option value="RH Interno">RH Interno</option>
+              </select>
+            </div>
+          </div>
+          <div class="chart-box"><canvas id="inboundShareChart"></canvas></div>
+        </section>
+
+        <section class="chart-panel line-focus">
+          <div class="chart-title">
+            <div>
+              <h2>Média de aplicantes de mídia paga por vaga no ano</h2>
+              <p>Média mensal de aplicantes de mídia paga tradicional (Indeed, Meta Ads, Jobslot) por vaga.</p>
+            </div>
+          </div>
+          <div class="chart-box"><canvas id="tradPaidApplicantsChart"></canvas></div>
+        </section>
+
+        <div class="section-heading">
+          <div>
+            <h2>Custos por contratação de Inbound em vagas fechadas</h2>
+            <p>Custo médio de contratação por mídia paga.</p>
+          </div>
+          <span class="badge" id="costPeriodBadge">Acumulado</span>
+        </div>
+
+        <div class="kpi-grid">
+          <article class="kpi">
+            <span>Custo por contratação média (vagas fechadas)</span>
+            <strong id="costHireClosedPaid" class="skeleton">R$ 0</strong>
+            <small id="costHireClosedSub">Acumulado</small>
+          </article>
+          <article class="kpi">
+            <span>Custo de contratação médio mídia paga (Executive Search)</span>
+            <strong id="costHireExec" class="skeleton">R$ 0</strong>
+            <small id="costHireExecSub">Acumulado</small>
+          </article>
+          <article class="kpi">
+            <span>Custo de contratação médio mídia paga (Standard)</span>
+            <strong id="costHireStd" class="skeleton">R$ 0</strong>
+            <small id="costHireStdSub">Acumulado</small>
+          </article>
+          <article class="kpi">
+            <span>Custo de contratação médio mídia paga (Plus)</span>
+            <strong id="costHirePlus" class="skeleton">R$ 0</strong>
+            <small id="costHirePlusSub">Acumulado</small>
+          </article>
+        </div>
+
+        <div class="dashboard-grid exec-charts">
+          <section class="chart-panel">
+            <div class="chart-title">
+              <div>
+                <h2>Contratados por canal</h2>
+                <p>Canal real identificado pela coluna Origem do contratado.</p>
+              </div>
+            </div>
+            <div class="chart-box"><canvas id="hiresChannelChart"></canvas></div>
+          </section>
+
+          <aside class="insight-panel">
+            <div class="chart-title">
+              <div>
+                <h2>Leitura rapida</h2>
+                <p>Indicadores complementares do período filtrado.</p>
+              </div>
+            </div>
+            <div class="stack">
+              <div class="metric-row"><span>Média aplicantes Inbound/vaga</span><strong id="sideAvgApplicants">0</strong></div>
+              <div class="metric-row"><span>Média finalistas Inbound/vaga</span><strong id="sideAvgFinalists">0</strong></div>
+              <div class="metric-row"><span>Custo médio de mídia paga</span><strong id="sideAvgPaidCost">R$ 0</strong></div>
+              <div class="metric-row"><span>% de vagas canceladas</span><strong id="sideCancelRate">0%</strong></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="panel" id="inboundList">
+        <div class="section-heading">
+          <div>
+            <h2>Vagas que foram fechadas por Inbound</h2>
+            <p>Todas as vagas com contratação via Inbound: empresa, cargo, canal de fechamento e nº de contratações Inbound na vaga.</p>
+          </div>
+        </div>
+
+        <div class="inbound-list-summary">
+          <article class="kpi">
+            <span>Contratações Inbound total</span>
+            <strong id="listKpiHires">0</strong>
+            <small id="listKpiHiresSub">No filtro atual</small>
+          </article>
+          <article class="kpi product-breakdown-card">
+            <span>Contratações por produto</span>
+            <div class="kpi-breakdown" id="listProductBreakdown"></div>
+          </article>
+        </div>
+
+        <section class="table-panel full inbound-list">
+          <div class="chart-title">
+            <div>
+              <h2>Detalhe por vaga</h2>
+              <p>Vagas identificadas pela origem do contratado, ordenadas por produto (Executive Search, Plus, Standard, RH Interno).</p>
+            </div>
+            <div class="list-toolbar">
+              <label class="list-field">
+                <span>Produto</span>
+                <select id="listProductFilter" aria-label="Filtrar lista por produto">
+                  <option value="Todos">Todos os produtos</option>
+                </select>
+              </label>
+              <label class="list-field">
+                <span>Buscar</span>
+                <input type="search" id="listSearch" placeholder="Empresa ou cargo..." aria-label="Buscar empresa ou cargo">
+              </label>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Empresa</th>
+                  <th>Cargo</th>
+                  <th>Produto</th>
+                  <th>Canal de fechamento</th>
+                  <th class="num">Fechamentos Inbound</th>
+                </tr>
+              </thead>
+              <tbody id="inboundVacancyTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="panel" id="analysis">
+        <div class="analysis-grid">
+          <section class="chart-panel">
+            <div class="chart-title">
+              <div>
+                <h2>Aplicantes por canal</h2>
+                <p>Volume de entrada dos canais de Inbound.</p>
+              </div>
+            </div>
+            <div class="chart-box tall"><canvas id="applicantsChart"></canvas></div>
+          </section>
+
+          <section class="chart-panel">
+            <div class="chart-title">
+              <div>
+                <h2>Finalistas por canal</h2>
+                <p>Conversão intermediária por origem de divulgação.</p>
+              </div>
+            </div>
+            <div class="chart-box tall"><canvas id="finalistsChart"></canvas></div>
+          </section>
+
+          <section class="chart-panel">
+            <div class="chart-title">
+              <div>
+                <h2>Contratados por canal</h2>
+                <p>Quantidade e % de cada canal sobre o total de contratados Inbound.</p>
+              </div>
+            </div>
+            <div class="chart-box"><canvas id="channelHiresChart"></canvas></div>
+          </section>
+
+          <section class="chart-panel">
+            <div class="chart-title">
+              <div>
+                <h2>Contratados Inbound por unidade</h2>
+                <p>Vagas fechadas por Inbound em cada unidade — qtd e % do total Inbound.</p>
+              </div>
+            </div>
+            <div class="chart-box"><canvas id="unitChart"></canvas></div>
+          </section>
+
+          <section class="table-panel full">
+            <div class="chart-title">
+              <div>
+                <h2>Tabela por canal</h2>
+                <p>Aplicantes, finalistas, contratados, conversões, médias e custos.</p>
+              </div>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Canal</th>
+                    <th class="num">Aplicantes</th>
+                    <th class="num">Finalistas</th>
+                    <th class="num">Contratados</th>
+                    <th class="num">Finalistas / aplicantes</th>
+                    <th class="num">% dos hires Inbound</th>
+                    <th class="num">Vagas com canal</th>
+                    <th class="num">Media apl. / vaga</th>
+                  </tr>
+                </thead>
+                <tbody id="channelTable"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <section class="refresh-footer">
+          <div class="refresh-copy">
+            <h2>Atualizar dados do dashboard</h2>
+            <p id="refreshFooterStatus">Os dados são carregados da planilha somente quando você clica em atualizar.</p>
+          </div>
+          <button class="btn-refresh" id="refreshButtonBottom" type="button">
+            <i data-lucide="refresh-cw"></i>
+            <span>Atualizar dados</span>
+          </button>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const SPREADSHEET_ID = "14DibweyDrXhIwS-s0lGmWhtFsWWtQkh-Neq5lUVBCOM";
+    const PUBLISHED_ID = "2PACX-1vRMLzlrivbcCBvomqHmGR9PShELJ1mCl36FIpS3eMSNaVCbcj4ndebhb9tPEmMCz1WKevKLOMwScu7X";
+    const SHEETS = {
+      geral: { name: "TFC - KPI´s Gerais 2026", gid: "894469350" },
+      canais: { name: "KPI´s de Canais do Inbound", gid: "390003485", live: true },
+      dados: { name: "Dados gerais vagas Fechadas", gid: "450756489" },
+      inbound: { name: "Extração Inbound", gid: "812389938" },
+      final: { name: "Extração planilha final", gid: "1731679932" }
+    };
+
+    const MONTH_ORDER = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const MONTH_SHORT = {
+      "jan.26": "Janeiro",
+      "fev.26": "Fevereiro",
+      "mar.26": "Março",
+      "abr.26": "Abril",
+      "mai.26": "Maio",
+      "jun.26": "Junho",
+      "jul.26": "Julho",
+      "ago.26": "Agosto",
+      "set.26": "Setembro",
+      "out.26": "Outubro",
+      "nov.26": "Novembro",
+      "dez.26": "Dezembro"
+    };
+
+    const CHANNELS = [
+      { key: "jobslot", label: "Jobslot", app: 2, fin: 3, color: "#011E41" },
+      { key: "indeed", label: "Indeed", app: 26, fin: 27, color: "#2F6FEA" },
+      { key: "meta", label: "Meta Ads", app: 20, fin: 21, color: "#ea083d" },
+      { key: "linkedin", label: "LinkedIn Timeline", app: 14, fin: 15, color: "#06255B" },
+      { key: "software", label: "Software", app: 24, fin: 25, color: "#2ecc71" },
+      { key: "repescagem", label: "Repescagem", app: 4, fin: 5, color: "#CE0E2D" },
+      { key: "fonte", label: "Fonte de Talentos", app: 6, fin: 7, color: "#ff6084" },
+      { key: "tiktok", label: "Tiktok Ads", app: 28, fin: 29, color: "#bc002c" },
+      { key: "jooble", label: "Jooble", app: 30, fin: 31, color: "#8F8F8F" },
+      { key: "jobpost", label: "Jobpost", app: 10, fin: 11, color: "#A1C5F7" }
+    ];
+
+    const PRIORITY_COST_LABELS = [
+      "Custo de aplicante de mídia paga",
+      "Custo de finalistas de mídia paga",
+      "Custo de contratação médio mídia paga (VAGAS COM SUCESSO)",
+      "Custo de contratação médio mídia paga  (VAGAS FECHADAS)",
+      "Custo de contratação médio mídia paga (Executive Search)",
+      "Custo de contratação médio mídia paga (Standard)",
+      "Custo de contratação médio mídia paga (Plus)"
+    ];
+
+    const PRIORITY_VACANCY_LABELS = [
+      "Vagas fechadas por TFC",
+      "Vagas fechadas por TFC (Executive Search)",
+      "Vagas fechadas por TFC (Standard)",
+      "Vagas fechadas por TFC (Plus)",
+      "Vagas fechadas por TFC (RH Interno)",
+      "Vagas fechadas por Inbound",
+      "Vagas fechadas por Inbound (Executive Search)",
+      "Vagas fechadas por Inbound (Standard)",
+      "Vagas fechadas por Inbound (Plus)",
+      "Vagas fechadas por Inbound (RH Interno)"
+    ];
+
+    const PRODUCT_ORDER = ["Executive Search", "Plus", "Standard", "RH Interno"];
+
+    const PRODUCT_FILTERS = {
+      total: { label: "Todos", suffix: "" },
+      "Executive Search": { label: "Executive Search", suffix: " (Executive Search)" },
+      Standard: { label: "Standard", suffix: " (Standard)" },
+      Plus: { label: "Plus", suffix: " (Plus)" },
+      "RH Interno": { label: "RH Interno", suffix: " (RH Interno)" }
+    };
+
+    const state = {
+      sheets: {},
+      selectedMonth: "Todos",
+      selectedProduct: "total",
+      listProduct: "Todos",
+      listSearch: "",
+      lastInboundVacancies: [],
+      charts: {}
+    };
+
+    const fmtInt = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
+    const fmtOne = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const fmtMoney = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    function csvUrl(sheet) {
+      return `https://docs.google.com/spreadsheets/d/e/${PUBLISHED_ID}/pub?gid=${sheet.gid}&single=true&output=csv`;
+    }
+
+    function gvizUrl(sheet, callbackName) {
+      const tqx = encodeURIComponent(`out:json;responseHandler:${callbackName}`);
+      return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?gid=${sheet.gid}&tqx=${tqx}`;
+    }
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [];
+      let value = "";
+      let quoted = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (char === '"') {
+          if (quoted && next === '"') {
+            value += '"';
+            i++;
+          } else {
+            quoted = !quoted;
+          }
+        } else if (char === "," && !quoted) {
+          row.push(value);
+          value = "";
+        } else if ((char === "\n" || char === "\r") && !quoted) {
+          if (char === "\r" && next === "\n") i++;
+          row.push(value);
+          rows.push(row);
+          row = [];
+          value = "";
+        } else {
+          value += char;
+        }
+      }
+
+      if (value.length || row.length) {
+        row.push(value);
+        rows.push(row);
+      }
+
+      return rows.filter(r => r.some(cell => String(cell || "").trim() !== ""));
+    }
+
+    async function fetchSheet(sheet) {
+      if (sheet.live) return fetchGvizSheet(sheet);
+      const response = await fetch(csvUrl(sheet), { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`${sheet.name}: HTTP ${response.status}`);
+      }
+      const text = await response.text();
+      return parseCSV(text);
+    }
+
+    function fetchGvizSheet(sheet) {
+      return new Promise((resolve, reject) => {
+        const callbackName = `__sheetCallback_${sheet.gid}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+        const script = document.createElement("script");
+        const timeout = window.setTimeout(() => {
+          cleanup();
+          reject(new Error(`${sheet.name}: tempo esgotado`));
+        }, 20000);
+
+        function cleanup() {
+          window.clearTimeout(timeout);
+          delete window[callbackName];
+          script.remove();
+        }
+
+        window[callbackName] = payload => {
+          cleanup();
+          if (!payload || payload.status !== "ok") {
+            reject(new Error(`${sheet.name}: resposta invalida`));
+            return;
+          }
+          resolve(gvizToRows(payload.table));
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error(`${sheet.name}: falha ao carregar JSONP`));
+        };
+        script.src = gvizUrl(sheet, callbackName);
+        document.head.appendChild(script);
+      });
+    }
+
+    function gvizToRows(table) {
+      const header = (table.cols || []).map(col => col.label || "");
+      const rows = (table.rows || []).map(row => {
+        return (table.cols || []).map((_, index) => {
+          const cell = row.c && row.c[index];
+          if (!cell) return "";
+          if (cell.f !== undefined && cell.f !== null) return cell.f;
+          return cell.v === undefined || cell.v === null ? "" : String(cell.v);
+        });
+      });
+      return [header, ...rows].filter(r => r.some(cell => String(cell || "").trim() !== ""));
+    }
+
+    function esc(value) {
+      return String(value === null || value === undefined ? "" : value)
+        .replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+    }
+
+    function normalize(value) {
+      return String(value || "")
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+    }
+
+    function toNumber(value) {
+      if (value === null || value === undefined) return 0;
+      let s = String(value).trim();
+      if (!s || s === "-") return 0;
+      s = s.replace(/R\$/g, "").replace(/%/g, "").replace(/\s/g, "");
+      if (s.includes(",")) {
+        s = s.replace(/\./g, "").replace(",", ".");
+      } else if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+        s = s.replace(/\./g, "");
+      }
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function pct(numerator, denominator) {
+      return denominator ? (numerator / denominator) * 100 : 0;
+    }
+
+    function avg(values) {
+      const clean = values.filter(v => Number.isFinite(v) && v > 0);
+      return clean.length ? clean.reduce((a, b) => a + b, 0) / clean.length : 0;
+    }
+
+    function classifyOrigin(origin) {
+      const o = normalize(origin);
+      if (!o || o === "-" || o === "sem sucesso") return { group: "none", channel: "Sem contratação" };
+      if (o.includes("indicacao")) return { group: "indication", channel: "Indicação" };
+      if (o.includes("captacao")) return { group: "hunting", channel: "Hunting" };
+      if (o.includes("timeline")) return { group: "inbound", channel: "LinkedIn Timeline" };
+      if (o.includes("fonte de talentos")) return { group: "inbound", channel: "Fonte de Talentos" };
+      if (o.includes("repescagem")) return { group: "inbound", channel: "Repescagem" };
+      if (o.includes("meta")) return { group: "inbound", channel: "Meta Ads" };
+      if (o.includes("indeed")) return { group: "inbound", channel: "Indeed" };
+      if (o.includes("jobslot")) return { group: "inbound", channel: "Jobslot" };
+      if (o.includes("jobpost")) return { group: "inbound", channel: "Jobpost" };
+      if (o.includes("jooble")) return { group: "inbound", channel: "Jooble" };
+      if (o.includes("tiktok")) return { group: "inbound", channel: "Tiktok Ads" };
+      return { group: "other", channel: origin.trim() };
+    }
+
+    function unitName(value) {
+      const o = normalize(value);
+      if (o.includes("rh interno")) return "RH Interno";
+      if (o.includes("rpo")) return "RPO";
+      if (o.includes("salesjobs")) return "Salesjobs";
+      if (o.includes("easyhire")) return "EasyHire";
+      if (o.includes("foursales")) return "Foursales";
+      return value || "Outros";
+    }
+
+    function rowMonth(row, type) {
+      if (type === "inbound") return String(row[34] || "").trim();
+      return String(row[21] || "").trim();
+    }
+
+    function filterByMonth(rows, type) {
+      if (state.selectedMonth === "Todos") return rows;
+      return rows.filter(row => normalize(rowMonth(row, type)) === normalize(state.selectedMonth));
+    }
+
+    function getKpiRows(sheet) {
+      return sheet.slice(2);
+    }
+
+    function kpiRow(sheet, label) {
+      const needle = normalize(label);
+      return getKpiRows(sheet).find(row => normalize(row[0]) === needle)
+        || getKpiRows(sheet).find(row => normalize(row[0]).includes(needle));
+    }
+
+    function getMonthColumns(sheet) {
+      const header = sheet.find(row => row.some(value => {
+        const key = normalize(value);
+        const original = String(value || "").trim().toLowerCase();
+        return MONTH_SHORT[original] || MONTH_ORDER.some(month => normalize(month) === key);
+      })) || sheet[1] || sheet[0] || [];
+      const cols = [];
+      header.forEach((value, index) => {
+        const key = normalize(value);
+        const original = String(value || "").trim().toLowerCase();
+        if (MONTH_SHORT[original]) cols.push({ label: MONTH_SHORT[original], index });
+        const monthName = MONTH_ORDER.find(month => normalize(month) === key);
+        if (monthName) cols.push({ label: monthName, index });
+        if (!MONTH_SHORT[original] && key.match(/^(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\.26$/)) {
+          const found = Object.entries(MONTH_SHORT).find(([short]) => normalize(short) === key);
+          if (found) cols.push({ label: found[1], index });
+        }
+      });
+      return cols.filter((item, index, all) => all.findIndex(other => other.index === item.index) === index);
+    }
+
+    function kpiValue(sheet, label, month = state.selectedMonth) {
+      const row = kpiRow(sheet, label);
+      if (!row) return 0;
+      if (month === "Todos") return toNumber(row[1]);
+      const col = getMonthColumns(sheet).find(item => normalize(item.label) === normalize(month));
+      return col ? toNumber(row[col.index]) : 0;
+    }
+
+    function kpiMetric(sheet, label, month = state.selectedMonth) {
+      const row = kpiRow(sheet, label);
+      if (!row) return { label, value: 0, percent: 0 };
+      if (month === "Todos") {
+        return { label: row[0] || label, value: toNumber(row[1]), percent: toNumber(row[2]) };
+      }
+      const col = getMonthColumns(sheet).find(item => normalize(item.label) === normalize(month));
+      return {
+        label: row[0] || label,
+        value: col ? toNumber(row[col.index]) : 0,
+        percent: col ? toNumber(row[col.index + 1]) : 0
+      };
+    }
+
+    function buildParentMap(rows) {
+      const map = new Map();
+      rows.forEach(row => {
+        const id = String(row[0] || "").trim();
+        const pai = toNumber(row[10]);
+        if (id && pai === 0) map.set(id, row);
+      });
+      return map;
+    }
+
+    function consolidatedRows(rows) {
+      const byId = new Map();
+      rows.forEach(row => {
+        const id = String(row[0] || "").trim();
+        const pai = toNumber(row[10]);
+        if (!id) return;
+        if (pai === 0) {
+          byId.set(id, row);
+        } else if (!byId.has(id) && pai === 1) {
+          byId.set(id, row);
+        }
+      });
+      return Array.from(byId.values());
+    }
+
+    function calculate() {
+      const dadosRows = state.sheets.dados.slice(2);
+      const inboundRows = state.sheets.inbound.slice(1);
+      const dados = filterByMonth(dadosRows, "dados");
+      const inbound = filterByMonth(inboundRows, "inbound");
+      const parentMap = buildParentMap(dadosRows);
+      const consolidated = consolidatedRows(dados);
+      const contracts = dados
+        .map(row => {
+          const origin = row[55];
+          const type = classifyOrigin(origin);
+          const id = String(row[0] || "").trim();
+          const parent = parentMap.get(id);
+          const time = toNumber(row[20]) || toNumber(parent && parent[20]);
+          return {
+            row,
+            id,
+            type,
+            time,
+            unit: unitName(row[3]),
+            short: toNumber(row[16])
+          };
+        })
+        .filter(item => item.type.group !== "none" && item.type.group !== "other");
+
+      const originCounts = {
+        inbound: contracts.filter(c => c.type.group === "inbound").length,
+        hunting: contracts.filter(c => c.type.group === "hunting").length,
+        indication: contracts.filter(c => c.type.group === "indication").length
+      };
+      const totalContracts = originCounts.inbound + originCounts.hunting + originCounts.indication;
+      const inboundContracts = contracts.filter(c => c.type.group === "inbound");
+      const huntingContracts = contracts.filter(c => c.type.group === "hunting");
+
+      const inboundVacancyMap = new Map();
+      inboundContracts.forEach(item => {
+        const r = item.row;
+        const id = item.id;
+        if (!inboundVacancyMap.has(id)) {
+          inboundVacancyMap.set(id, {
+            id,
+            empresa: String(r[7] || "").trim(),
+            cargo: String(r[9] || "").trim(),
+            produto: String(r[4] || "").trim(),
+            channels: {},
+            total: 0
+          });
+        }
+        const v = inboundVacancyMap.get(id);
+        v.channels[item.type.channel] = (v.channels[item.type.channel] || 0) + 1;
+        v.total += 1;
+      });
+      const inboundVacancies = Array.from(inboundVacancyMap.values())
+        .sort((a, b) => (b.total - a.total) || a.empresa.localeCompare(b.empresa));
+
+      const hiresByChannel = Object.fromEntries(CHANNELS.map(c => [c.label, 0]));
+      inboundContracts.forEach(item => {
+        hiresByChannel[item.type.channel] = (hiresByChannel[item.type.channel] || 0) + 1;
+      });
+
+      const inboundHiresByUnit = {};
+      inboundContracts.forEach(item => {
+        inboundHiresByUnit[item.unit] = (inboundHiresByUnit[item.unit] || 0) + 1;
+      });
+
+      const channelStats = CHANNELS.map(channel => {
+        const applicants = inbound.reduce((sum, row) => sum + (channel.app === null ? 0 : toNumber(row[channel.app])), 0);
+        const finalists = inbound.reduce((sum, row) => sum + (channel.fin === null ? 0 : toNumber(row[channel.fin])), 0);
+        const jobsWithChannel = inbound.filter(row => {
+          const app = channel.app === null ? 0 : toNumber(row[channel.app]);
+          const fin = channel.fin === null ? 0 : toNumber(row[channel.fin]);
+          return app > 0 || fin > 0;
+        }).length;
+        const hires = hiresByChannel[channel.label] || 0;
+        return {
+          ...channel,
+          applicants,
+          finalists,
+          hires,
+          jobsWithChannel,
+          applicantAvg: jobsWithChannel ? applicants / jobsWithChannel : 0,
+          finalistRate: pct(finalists, applicants),
+          hireShare: pct(hires, originCounts.inbound)
+        };
+      });
+
+      const detailedInboundApplicants = channelStats.reduce((sum, c) => sum + c.applicants, 0);
+      const detailedInboundFinalists = channelStats.reduce((sum, c) => sum + c.finalists, 0);
+      const totalInboundApplicants = kpiValue(state.sheets.canais, "Total de aplicantes de todos os canais Inbound") || detailedInboundApplicants;
+      const totalInboundFinalists = kpiValue(state.sheets.canais, "Finalistas total") || detailedInboundFinalists;
+      const kpiAvgInboundApplicants = kpiValue(state.sheets.canais, "Média de aplicantes de todos os canais Inbound/vaga");
+      const kpiAvgInboundFinalists = kpiValue(state.sheets.canais, "Média de finalistas geral");
+      const inboundJobs = new Set(inbound.map(row => String(row[0] || "").trim()).filter(Boolean)).size || consolidated.filter(row => normalize(row[13]) === "sim").length;
+      const premiumJobs = inbound.filter(row => toNumber(row[4]) > 0 || toNumber(row[6]) > 0).length;
+      const costRows = consolidated.filter(row => toNumber(row[57]) > 0);
+      const paidCost = costRows.reduce((sum, row) => sum + toNumber(row[57]), 0);
+      const avgPaidCost = avg(costRows.map(row => toNumber(row[57])));
+      const cancelled = kpiValue(state.sheets.geral, "Vagas canceladas") || consolidated.filter(row => normalize(row[2]).includes("cancelada")).length;
+      const closed = kpiValue(state.sheets.geral, "Vagas encerradas") || consolidated.filter(row => normalize(row[2]).includes("fechada") || normalize(row[2]).includes("cancelada")).length;
+      const divulgadas = kpiValue(state.sheets.geral, "Vagas divulgadas no mês");
+      const novas = kpiValue(state.sheets.geral, "Vagas novas divulgadas no mês");
+      const applicantsHunting = consolidated.reduce((sum, row) => sum + toNumber(row[23]), 0);
+
+      const firstShortInbound = inboundContracts.filter(c => c.short === 1).length;
+      const consultancyUnits = new Set(["Salesjobs", "EasyHire", "Foursales"]);
+      const inboundConsultancyPct = pct(
+        inboundContracts.filter(c => consultancyUnits.has(c.unit)).length,
+        contracts.filter(c => consultancyUnits.has(c.unit)).length
+      );
+
+      return {
+        originCounts,
+        totalContracts,
+        hiresByChannel,
+        inboundHiresByUnit,
+        inboundVacancies,
+        channelStats,
+        totalInboundApplicants,
+        totalInboundFinalists,
+        inboundJobs,
+        premiumJobs,
+        paidCost,
+        avgPaidCost,
+        cancelled,
+        closed,
+        divulgadas,
+        novas,
+        applicantsHunting,
+        avgInboundTime: avg(inboundContracts.map(c => c.time)),
+        avgHuntingTime: avg(huntingContracts.map(c => c.time)),
+        costPerHire: originCounts.inbound ? paidCost / originCounts.inbound : 0,
+        costPerApplicant: totalInboundApplicants ? paidCost / totalInboundApplicants : 0,
+        costPerFinalist: totalInboundFinalists ? paidCost / totalInboundFinalists : 0,
+        avgInboundApplicants: kpiAvgInboundApplicants || (inboundJobs ? totalInboundApplicants / inboundJobs : 0),
+        avgInboundFinalists: kpiAvgInboundFinalists || (inboundJobs ? totalInboundFinalists / inboundJobs : 0),
+        avgHuntingApplicants: consolidated.length ? applicantsHunting / consolidated.length : 0,
+        firstShortInbound,
+        inboundConsultancyPct,
+        premiumRate: pct(premiumJobs, inboundJobs)
+      };
+    }
+
+    function calculateMonthlyTrend() {
+      const months = getMonthColumns(state.sheets.geral).map(item => item.label);
+      const dadosRows = state.sheets.dados.slice(2);
+      return months.map(month => {
+        const oldMonth = state.selectedMonth;
+        state.selectedMonth = month;
+        const current = calculate();
+        state.selectedMonth = oldMonth;
+        return {
+          month,
+          divulgadas: kpiValue(state.sheets.geral, "Vagas divulgadas no mês", month),
+          novas: kpiValue(state.sheets.geral, "Vagas novas divulgadas no mês", month),
+          inbound: current.originCounts.inbound,
+          hunting: current.originCounts.hunting
+        };
+      }).filter(row => row.divulgadas || row.novas || row.inbound || row.hunting);
+    }
+
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = value;
+      el.classList.remove("skeleton");
+    }
+
+    function makeChart(id, type, data, options = {}) {
+      const ctx = document.getElementById(id);
+      if (!ctx) return;
+      if (state.charts[id]) state.charts[id].destroy();
+      state.charts[id] = new Chart(ctx, {
+        type,
+        data,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 260 },
+          plugins: {
+            legend: { position: "bottom", labels: { boxWidth: 12, usePointStyle: true } },
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  const raw = context.raw || 0;
+                  return `${context.dataset.label || context.label}: ${fmtInt.format(raw)}`;
+                }
+              }
+            }
+          },
+          scales: type === "doughnut" || type === "pie" ? {} : {
+            x: { grid: { color: "#eef2f6" }, ticks: { color: "#667085" } },
+            y: { grid: { color: "#eef2f6" }, ticks: { color: "#667085" }, beginAtZero: true }
+          },
+          ...options
+        }
+      });
+    }
+
+    function cleanMetricLabel(label) {
+      return String(label || "")
+        .replace("Custo de contratação médio mídia paga", "Contratação média")
+        .replace("Custo de aplicante de mídia paga", "Aplicante de mídia paga")
+        .replace("Custo de finalistas de mídia paga", "Finalista de mídia paga")
+        .replace("Vagas fechadas por ", "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function renderMetricList(id, metrics, formatter) {
+      const list = document.getElementById(id);
+      if (!list) return;
+      list.innerHTML = "";
+      metrics.forEach(metric => {
+        const item = document.createElement("div");
+        item.className = "metric-item";
+        const name = document.createElement("div");
+        name.className = "metric-name";
+        name.textContent = cleanMetricLabel(metric.label);
+        if (metric.percent) {
+          const sub = document.createElement("span");
+          sub.className = "metric-sub";
+          sub.textContent = `${fmtOne.format(metric.percent)}% do total`;
+          name.appendChild(sub);
+        }
+        const value = document.createElement("div");
+        value.className = "metric-value";
+        value.textContent = formatter(metric.value);
+        item.append(name, value);
+        list.appendChild(item);
+      });
+    }
+
+    function strategicLabel(base, product = state.selectedProduct) {
+      const config = PRODUCT_FILTERS[product] || PRODUCT_FILTERS.total;
+      return `${base}${config.suffix}`;
+    }
+
+    function indicationCountFromDados(month = state.selectedMonth) {
+      const rows = state.sheets.dados ? state.sheets.dados.slice(2) : [];
+      return filterByMonth(rows, "dados").filter(row => normalize(row[55]).includes("indicacao")).length;
+    }
+
+    function closureMetrics(month = state.selectedMonth) {
+      const tfc = kpiMetric(state.sheets.canais, "Vagas fechadas por TFC", month);
+      const inbound = kpiMetric(state.sheets.canais, "Vagas fechadas por Inbound", month);
+      const hunting = kpiMetric(state.sheets.canais, "Vagas fechadas por captação", month);
+      const huntingValue = hunting.value || Math.max(0, tfc.value - inbound.value);
+      const operativeTotal = inbound.value + huntingValue;
+      const indicationValue = indicationCountFromDados(month);
+      return {
+        tfc: tfc.value,
+        inbound: inbound.value,
+        hunting: huntingValue,
+        indications: indicationValue,
+        inboundShare: pct(inbound.value, operativeTotal),
+        huntingShare: pct(huntingValue, operativeTotal),
+        indicationShare: pct(indicationValue, operativeTotal + indicationValue)
+      };
+    }
+
+    function calculateInboundShareTrend(product = state.selectedProduct) {
+      const tfcLabel = strategicLabel("Vagas fechadas por TFC", product);
+      const inboundLabel = strategicLabel("Vagas fechadas por Inbound", product);
+      return getMonthColumns(state.sheets.canais).map(item => {
+        const inbound = kpiMetric(state.sheets.canais, inboundLabel, item.label);
+        const tfc = kpiMetric(state.sheets.canais, tfcLabel, item.label);
+        const share = pct(inbound.value, tfc.value);
+        return {
+          month: item.label,
+          inbound: inbound.value,
+          tfc: tfc.value,
+          share
+        };
+      }).filter(row => row.inbound || row.tfc || row.share);
+    }
+
+    function calculateTradPaidApplicantsTrend() {
+      // Média de aplicantes de mídia paga POR VAGA (aba KPI´s de Canais do Inbound)
+      return getMonthColumns(state.sheets.canais).map(item => ({
+        month: item.label,
+        applicants: kpiValue(state.sheets.canais, "Média de aplicantes mídia paga", item.label)
+      })).filter(row => row.applicants);
+    }
+
+    function renderPriorityMetrics() {
+      const selectedLabel = state.selectedMonth === "Todos" ? "Acumulado" : state.selectedMonth;
+      const costs = PRIORITY_COST_LABELS.map(label => kpiMetric(state.sheets.canais, label));
+      const closure = closureMetrics();
+
+      setText("costHireClosedPaid", fmtMoney.format(costs[3]?.value || 0));
+      setText("costHireExec", fmtMoney.format(costs[4]?.value || 0));
+      setText("costHireStd", fmtMoney.format(costs[5]?.value || 0));
+      setText("costHirePlus", fmtMoney.format(costs[6]?.value || 0));
+      setText("costHireClosedSub", selectedLabel);
+      setText("costHireExecSub", selectedLabel);
+      setText("costHireStdSub", selectedLabel);
+      setText("costHirePlusSub", selectedLabel);
+      setText("costPeriodBadge", selectedLabel);
+      makeChart("closureDonutChart", "doughnut", {
+        labels: ["Inbound", "Hunting"],
+        datasets: [{
+          data: [closure.inbound, closure.hunting],
+          backgroundColor: ["#CE0E2D", "#011E41"],
+          borderWidth: 0
+        }]
+      }, {
+        cutout: "66%",
+        plugins: {
+          legend: { position: "bottom", labels: { boxWidth: 12, usePointStyle: true } },
+          tooltip: {
+            callbacks: {
+              label(context) {
+                const total = closure.inbound + closure.hunting;
+                return `${context.label}: ${fmtInt.format(context.raw || 0)} (${fmtOne.format(pct(context.raw || 0, total))}%)`;
+              }
+            }
+          }
+        }
+      });
+
+      const productLabel = (PRODUCT_FILTERS[state.selectedProduct] || PRODUCT_FILTERS.total).label;
+      const shareTrend = calculateInboundShareTrend();
+      makeChart("inboundShareChart", "line", {
+        labels: shareTrend.map(row => row.month),
+        datasets: [{
+          label: `% Inbound - ${productLabel}`,
+          data: shareTrend.map(row => row.share),
+          borderColor: "#CE0E2D",
+          backgroundColor: "rgba(206, 14, 45, 0.12)",
+          pointBackgroundColor: "#CE0E2D",
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          fill: true,
+          tension: 0.35
+        }]
+      }, {
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label(context) {
+                const row = shareTrend[context.dataIndex];
+                return `${fmtOne.format(context.raw || 0)}% Inbound (${fmtInt.format(row.inbound)} de ${fmtInt.format(row.tfc)})`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: "#667085" } },
+          y: { grid: { color: "#eef2f6" }, ticks: { color: "#667085", callback: value => `${value}%` }, beginAtZero: true, suggestedMax: 100 }
+        }
+      });
+
+      const tradPaidTrend = calculateTradPaidApplicantsTrend();
+      makeChart("tradPaidApplicantsChart", "line", {
+        labels: tradPaidTrend.map(row => row.month),
+        datasets: [{
+          label: "Média de aplicantes mídia paga / vaga",
+          data: tradPaidTrend.map(row => row.applicants),
+          borderColor: "#2F6FEA",
+          backgroundColor: "rgba(47, 111, 234, 0.12)",
+          pointBackgroundColor: "#2F6FEA",
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          fill: true,
+          tension: 0.35
+        }]
+      }, {
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label(context) {
+                return `${fmtOne.format(context.raw || 0)} aplicantes/vaga`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: "#667085" } },
+          y: { grid: { color: "#eef2f6" }, ticks: { color: "#667085" }, beginAtZero: true }
+        }
+      });
+    }
+
+    function productRank(product) {
+      const index = PRODUCT_ORDER.findIndex(p => normalize(p) === normalize(product));
+      return index === -1 ? PRODUCT_ORDER.length : index;
+    }
+
+    function renderInboundList(vacancies) {
+      state.lastInboundVacancies = vacancies;
+      const select = document.getElementById("listProductFilter");
+      const tbody = document.getElementById("inboundVacancyTable");
+      if (!select || !tbody) return;
+
+      const products = Array.from(new Set(vacancies.map(v => v.produto).filter(Boolean)))
+        .sort((a, b) => (productRank(a) - productRank(b)) || a.localeCompare(b, "pt-BR"));
+      const current = state.listProduct || "Todos";
+      select.innerHTML = `<option value="Todos">Todos os produtos</option>`
+        + products.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join("");
+      select.value = (current === "Todos" || products.includes(current)) ? current : "Todos";
+      state.listProduct = select.value;
+
+      const byProduct = state.listProduct === "Todos"
+        ? vacancies
+        : vacancies.filter(v => v.produto === state.listProduct);
+
+      // Resumo alinhado à primeira página: total e quebra por produto vêm da aba
+      // "KPI´s de Canais do Inbound" (bloco KPIS Estratégicos -> "Vagas fechadas por Inbound"),
+      // a MESMA fonte do card "Contratados Inbound" da Visão principal.
+      const inboundClosed = product => {
+        const suffix = (!product || product === "Todos") ? "" : ` (${product})`;
+        return kpiValue(state.sheets.canais, `Vagas fechadas por Inbound${suffix}`);
+      };
+      const overallInbound = inboundClosed("Todos") || vacancies.reduce((s, v) => s + v.total, 0);
+      const headlineTotal = (state.listProduct === "Todos")
+        ? overallInbound
+        : (inboundClosed(state.listProduct) || byProduct.reduce((s, v) => s + v.total, 0));
+      setText("listKpiHires", fmtInt.format(headlineTotal));
+      setText("listKpiHiresSub", state.listProduct === "Todos"
+        ? "Mesma fonte da Visão principal (KPIs de Canais)"
+        : `Produto: ${state.listProduct}`);
+
+      const breakdownEl = document.getElementById("listProductBreakdown");
+      if (breakdownEl) {
+        breakdownEl.innerHTML = "";
+        const entries = PRODUCT_ORDER
+          .map(p => [p, inboundClosed(p)])
+          .filter(([, count]) => count > 0);
+        if (!entries.length) {
+          breakdownEl.innerHTML = `<span>Sem contratações no filtro atual</span>`;
+        } else {
+          entries.forEach(([product, count]) => {
+            const chip = document.createElement("span");
+            chip.innerHTML = `${esc(product)} <b>${fmtInt.format(count)}</b> (${fmtOne.format(pct(count, overallInbound))}%)`;
+            breakdownEl.appendChild(chip);
+          });
+        }
+      }
+
+      // Busca por empresa/cargo (apenas na tabela)
+      const query = normalize(state.listSearch || "");
+      const filtered = (query
+        ? byProduct.filter(v => normalize(v.empresa).includes(query) || normalize(v.cargo).includes(query))
+        : byProduct.slice())
+        .sort((a, b) => (productRank(a.produto) - productRank(b.produto)) || (b.total - a.total) || a.empresa.localeCompare(b.empresa, "pt-BR"));
+
+      tbody.innerHTML = "";
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Nenhuma vaga fechada por Inbound no filtro atual.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(v => {
+        const chips = Object.entries(v.channels)
+          .sort((a, b) => b[1] - a[1])
+          .map(([ch, n]) => {
+            const color = (CHANNELS.find(c => c.label === ch) || {}).color || "#011E41";
+            return `<span class="badge" style="background:${color}18;color:${color}">${esc(ch)}${n > 1 ? ` &times;${n}` : ""}</span>`;
+          }).join(" ");
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${esc(v.empresa) || "-"}</td>
+          <td>${esc(v.cargo) || "-"}</td>
+          <td>${esc(v.produto) || "-"}</td>
+          <td>${chips}</td>
+          <td class="num">${fmtInt.format(v.total)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function render() {
+      const data = calculate();
+      const selectedLabel = state.selectedMonth === "Todos" ? "Acumulado" : state.selectedMonth;
+
+      renderPriorityMetrics();
+      renderInboundList(data.inboundVacancies);
+
+      // Indicadores executivos sourced from "KPI´s de Canais do Inbound" -> bloco "KPIS Estratégicos Inbound":
+      //   Contratados TFC     -> "Vagas fechadas por TFC"
+      //   Contratados Inbound -> "Vagas fechadas por Inbound"
+      //   Contratados Hunting -> TFC - Inbound (derivado)
+      //   Contratados Indicação -> contagem de indicações na aba de vagas (única exceção permitida)
+      const closure = closureMetrics();
+      const tfcContracts = closure.tfc;
+      const totalWithIndication = closure.tfc + closure.indications;
+      setText("kpiTfc", fmtInt.format(closure.tfc));
+      setText("kpiTfcShare", `${fmtOne.format(pct(closure.tfc, totalWithIndication))}% sem indicações - ${selectedLabel}`);
+      setText("kpiInbound", fmtInt.format(closure.inbound));
+      setText("kpiInboundShare", `${fmtOne.format(pct(closure.inbound, closure.tfc))}% dos contratados TFC - ${selectedLabel}`);
+      setText("kpiHunting", fmtInt.format(closure.hunting));
+      setText("kpiHuntingShare", `${fmtOne.format(pct(closure.hunting, closure.tfc))}% dos contratados TFC - ${selectedLabel}`);
+      setText("kpiIndication", fmtInt.format(closure.indications));
+      setText("kpiIndicationShare", `${fmtOne.format(pct(closure.indications, totalWithIndication))}% do total com indicação - ${selectedLabel}`);
+      setText("kpiInboundTime", `${fmtOne.format(data.avgInboundTime)}d`);
+      setText("kpiHuntingTime", `${fmtOne.format(data.avgHuntingTime)}d`);
+      setText("kpiCostHire", fmtMoney.format(data.costPerHire));
+      setText("kpiPaidCost", `Midia paga total: ${fmtMoney.format(data.paidCost)}`);
+      setText("kpiDivulgadas", fmtInt.format(data.divulgadas));
+      setText("kpiNovas", `Novas divulgadas: ${fmtInt.format(data.novas)}`);
+
+      setText("sideAvgApplicants", fmtOne.format(data.avgInboundApplicants));
+      setText("sideAvgFinalists", fmtOne.format(data.avgInboundFinalists));
+      setText("sideAvgPaidCost", fmtMoney.format(data.avgPaidCost));
+      setText("sideCancelRate", `${fmtOne.format(pct(data.cancelled, data.closed))}%`);
+
+      const hireStats = data.channelStats.filter(c => c.hires > 0).sort((a, b) => b.hires - a.hires);
+
+      const inboundChannelsEl = document.getElementById("kpiInboundChannels");
+      if (inboundChannelsEl) {
+        inboundChannelsEl.innerHTML = "";
+        if (hireStats.length) {
+          hireStats.forEach(c => {
+            const chip = document.createElement("span");
+            chip.innerHTML = `${c.label} <b>${fmtInt.format(c.hires)}</b>`;
+            inboundChannelsEl.appendChild(chip);
+          });
+        } else {
+          const chip = document.createElement("span");
+          chip.textContent = "Sem contratados por canal";
+          inboundChannelsEl.appendChild(chip);
+        }
+      }
+
+      makeChart("hiresChannelChart", "bar", {
+        labels: [...hireStats.map(c => c.label), "Hunting"],
+        datasets: [{
+          label: "Contratados",
+          data: [...hireStats.map(c => c.hires), data.originCounts.hunting],
+          backgroundColor: [...hireStats.map(c => c.color), "#011E41"],
+          borderRadius: 6
+        }]
+      }, {
+        indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: "#eef2f6" }, beginAtZero: true },
+          y: { grid: { display: false } }
+        }
+      });
+
+      const channelOrdered = [...data.channelStats].sort((a, b) => b.applicants - a.applicants);
+      makeChart("applicantsChart", "bar", {
+        labels: channelOrdered.map(c => c.label),
+        datasets: [{ label: "Aplicantes", data: channelOrdered.map(c => c.applicants), backgroundColor: channelOrdered.map(c => c.color), borderRadius: 6 }]
+      }, { indexAxis: "y", plugins: { legend: { display: false } }, scales: { y: { grid: { display: false } } } });
+
+      const finalistsOrdered = [...data.channelStats].sort((a, b) => b.finalists - a.finalists);
+      makeChart("finalistsChart", "bar", {
+        labels: finalistsOrdered.map(c => c.label),
+        datasets: [{ label: "Finalistas", data: finalistsOrdered.map(c => c.finalists), backgroundColor: finalistsOrdered.map(c => c.color), borderRadius: 6 }]
+      }, { indexAxis: "y", plugins: { legend: { display: false } }, scales: { y: { grid: { display: false } } } });
+
+      const channelHires = data.channelStats.filter(c => c.hires > 0).sort((a, b) => b.hires - a.hires);
+      makeChart("channelHiresChart", "bar", {
+        labels: channelHires.map(c => `${c.label} (${fmtOne.format(c.hireShare)}%)`),
+        datasets: [{ label: "Contratados", data: channelHires.map(c => c.hires), backgroundColor: channelHires.map(c => c.color), borderRadius: 6 }]
+      }, {
+        indexAxis: "y",
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label(context) {
+                const c = channelHires[context.dataIndex];
+                return `${fmtInt.format(c.hires)} contratados (${fmtOne.format(c.hireShare)}% do Inbound)`;
+              }
+            }
+          }
+        },
+        scales: { x: { beginAtZero: true, grid: { color: "#eef2f6" } }, y: { grid: { display: false } } }
+      });
+
+      const unitLabels = Object.keys(data.inboundHiresByUnit).sort((a, b) => data.inboundHiresByUnit[b] - data.inboundHiresByUnit[a]);
+      const unitColors = ["#011E41", "#ea083d", "#2F6FEA", "#A1C5F7", "#2ecc71", "#CE0E2D", "#8F8F8F"];
+      const totalInboundHires = data.originCounts.inbound;
+      makeChart("unitChart", "bar", {
+        labels: unitLabels.map(label => `${label} (${fmtOne.format(pct(data.inboundHiresByUnit[label], totalInboundHires))}%)`),
+        datasets: [{ label: "Contratados Inbound", data: unitLabels.map(label => data.inboundHiresByUnit[label]), backgroundColor: unitLabels.map((_, i) => unitColors[i % unitColors.length]), borderRadius: 6 }]
+      }, {
+        indexAxis: "y",
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label(context) {
+                const unit = unitLabels[context.dataIndex];
+                const qty = data.inboundHiresByUnit[unit];
+                return `${fmtInt.format(qty)} contratados Inbound (${fmtOne.format(pct(qty, totalInboundHires))}% do Inbound)`;
+              }
+            }
+          }
+        },
+        scales: { x: { beginAtZero: true, grid: { color: "#eef2f6" } }, y: { grid: { display: false } } }
+      });
+
+      const tbody = document.getElementById("channelTable");
+      tbody.innerHTML = "";
+      data.channelStats
+        .filter(c => c.applicants || c.finalists || c.hires || c.jobsWithChannel)
+        .sort((a, b) => (b.hires - a.hires) || (b.applicants - a.applicants))
+        .forEach(c => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><span class="badge" style="background:${c.color}18;color:${c.color}">${c.label}</span></td>
+            <td class="num">${fmtInt.format(c.applicants)}</td>
+            <td class="num">${fmtInt.format(c.finalists)}</td>
+            <td class="num">${fmtInt.format(c.hires)}</td>
+            <td class="num">${fmtOne.format(c.finalistRate)}%</td>
+            <td class="num">${fmtOne.format(c.hireShare)}%</td>
+            <td class="num">${fmtInt.format(c.jobsWithChannel)}</td>
+            <td class="num">${fmtOne.format(c.applicantAvg)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+    }
+
+    function populateMonths() {
+      const select = document.getElementById("monthSelect");
+      const monthsFromGeral = getMonthColumns(state.sheets.geral).map(item => item.label);
+      const monthsFromInbound = state.sheets.inbound.slice(1).map(row => row[34]).filter(Boolean);
+      const months = Array.from(new Set([...monthsFromGeral, ...monthsFromInbound]))
+        .filter(month => MONTH_ORDER.some(m => normalize(m) === normalize(month)))
+        .sort((a, b) => MONTH_ORDER.findIndex(m => normalize(m) === normalize(a)) - MONTH_ORDER.findIndex(m => normalize(m) === normalize(b)));
+
+      select.innerHTML = `<option value="Todos">Todos os meses</option>`;
+      months.forEach(month => {
+        const option = document.createElement("option");
+        option.value = month;
+        option.textContent = month;
+        select.appendChild(option);
+      });
+      select.value = state.selectedMonth;
+    }
+
+    function setLoadingButtons(isLoading) {
+      ["refreshButton", "refreshButtonBottom"].forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.disabled = isLoading;
+        btn.classList.toggle("loading", isLoading);
+      });
+    }
+
+    function setFooterStatus(text) {
+      const el = document.getElementById("refreshFooterStatus");
+      if (el) el.textContent = text;
+    }
+
+    function nowLabel() {
+      return new Date().toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
+    }
+
+    let isLoading = false;
+    async function load() {
+      if (isLoading) return;
+      isLoading = true;
+      setLoadingButtons(true);
+
+      const status = document.getElementById("loadStatus");
+      const errorBox = document.getElementById("errorBox");
+      status.querySelector(".dot").className = "dot";
+      status.querySelector("span:last-child").textContent = "Carregando dados da planilha...";
+      setFooterStatus("Carregando dados da planilha...");
+      errorBox.classList.remove("visible");
+
+      try {
+        // Só buscamos as abas realmente usadas no dashboard (a aba "Extração planilha final"
+        // não é consumida e era a requisição mais lenta).
+        const [geral, canais, dados, inbound] = await Promise.all([
+          fetchSheet(SHEETS.geral),
+          fetchSheet(SHEETS.canais),
+          fetchSheet(SHEETS.dados),
+          fetchSheet(SHEETS.inbound)
+        ]);
+        state.sheets = { geral, canais, dados, inbound };
+        populateMonths();
+        render();
+        const totalRows = Object.values(state.sheets).reduce((sum, rows) => sum + rows.length, 0);
+        status.querySelector(".dot").className = "dot ok";
+        status.querySelector("span:last-child").textContent = `Dados atualizados em ${nowLabel()} - ${totalRows} linhas lidas.`;
+        setFooterStatus(`Última atualização: ${nowLabel()}. Clique para buscar os dados mais recentes da planilha.`);
+      } catch (error) {
+        status.querySelector(".dot").className = "dot error";
+        status.querySelector("span:last-child").textContent = "Falha ao carregar dados.";
+        setFooterStatus(`Falha na última atualização: ${error.message}. Tente novamente.`);
+        errorBox.textContent = `Nao foi possivel ler a planilha: ${error.message}`;
+        errorBox.classList.add("visible");
+      } finally {
+        isLoading = false;
+        setLoadingButtons(false);
+      }
+    }
+
+    document.querySelectorAll(".tab-button").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab-button").forEach(btn => btn.setAttribute("aria-selected", "false"));
+        document.querySelectorAll(".panel").forEach(panel => panel.classList.remove("active"));
+        button.setAttribute("aria-selected", "true");
+        document.getElementById(button.dataset.tab).classList.add("active");
+      });
+    });
+
+    document.getElementById("monthSelect").addEventListener("change", event => {
+      state.selectedMonth = event.target.value;
+      render();
+    });
+
+    document.getElementById("productFilter").addEventListener("change", event => {
+      state.selectedProduct = event.target.value;
+      renderPriorityMetrics();
+    });
+
+    document.getElementById("listProductFilter").addEventListener("change", event => {
+      state.listProduct = event.target.value;
+      renderInboundList(state.lastInboundVacancies);
+    });
+
+    document.getElementById("listSearch").addEventListener("input", event => {
+      state.listSearch = event.target.value;
+      renderInboundList(state.lastInboundVacancies);
+    });
+
+    document.getElementById("refreshButton").addEventListener("click", load);
+    document.getElementById("refreshButtonBottom").addEventListener("click", load);
+
+    window.addEventListener("DOMContentLoaded", () => {
+      if (window.lucide) window.lucide.createIcons();
+      const status = document.getElementById("loadStatus");
+      status.querySelector(".dot").className = "dot";
+      status.querySelector("span:last-child").textContent = "Clique em Atualizar para carregar os dados da planilha.";
+    });
+  </script>
+</body>
+</html>
