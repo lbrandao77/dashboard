@@ -725,11 +725,13 @@
       color: var(--navy);
       background: var(--surface-2);
       font-size: 12px;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0;
       position: sticky;
-      top: 54px;
+      top: 0;
       z-index: 2;
+      box-shadow: inset 0 -1px 0 var(--line);
     }
 
     td.num, th.num {
@@ -850,7 +852,87 @@
       to { background-position: -220% 0; }
     }
 
+    /* ---- Polimento UX/UI ---- */
+    .period-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: linear-gradient(135deg, var(--navy), var(--navy-2));
+      color: #fff;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      box-shadow: 0 8px 18px rgba(1, 30, 65, 0.16);
+    }
+
+    .period-pill::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 0 3px rgba(206, 14, 45, 0.25);
+    }
+
+    .kpi-grid-5 {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    /* Cards com leve elevação no hover, leitura mais agradável */
+    .kpi, .focus-card, .chart-panel, .table-panel, .insight-panel, .metric-board {
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+    .kpi:hover, .focus-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 44px rgba(1, 30, 65, 0.12);
+    }
+
+    .chart-note {
+      margin: 12px 0 0;
+      padding-top: 10px;
+      border-top: 1px dashed var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      font-style: italic;
+      line-height: 1.4;
+    }
+
+    .legend-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .legend-pills span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--surface-2);
+      border-radius: 999px;
+      padding: 5px 11px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .legend-pills span i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+    }
+
+    .legend-pills span b {
+      font-weight: 900;
+    }
+
     @media (max-width: 1180px) {
+      .kpi-grid-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .focus-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .priority-grid { grid-template-columns: 1fr 1fr; }
       .closure-overview { grid-template-columns: 1fr; }
@@ -875,6 +957,7 @@
       .exec-top, .exec-charts { grid-template-columns: 1fr; }
       .exec-top .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .kpi-grid, .dashboard-grid, .analysis-grid { grid-template-columns: 1fr; }
+      .kpi-grid-5 { grid-template-columns: 1fr; }
       .inbound-list-summary { grid-template-columns: 1fr; }
       .chart-panel.wide, .full, .insight-panel { grid-column: auto; }
       .chart-box, .chart-box.tall { height: 300px; }
@@ -941,9 +1024,9 @@
 
     <nav class="tabs" aria-label="Abas do dashboard">
       <div class="tabs-inner">
-        <button class="tab-button" data-tab="executive" aria-selected="true">Visão principal</button>
+        <button class="tab-button" data-tab="executive" aria-selected="true">KPIs Inbound 2026</button>
         <button class="tab-button" data-tab="inboundList" aria-selected="false">Vagas fechadas por Inbound</button>
-        <button class="tab-button" data-tab="analysis" aria-selected="false">Análise detalhada</button>
+        <button class="tab-button" data-tab="analysis" aria-selected="false">Contratados por canal de divulgação</button>
       </div>
     </nav>
 
@@ -960,6 +1043,7 @@
             <h2>Indicadores executivos</h2>
             <p>Contratações TFC, Inbound, Hunting e Indicação.</p>
           </div>
+          <span class="period-pill" id="periodPillExec">Acumulado</span>
         </div>
 
         <div class="exec-top">
@@ -968,9 +1052,10 @@
               <span>Contratados TFC</span>
               <strong id="kpiTfc" class="skeleton">0</strong>
               <small id="kpiTfcShare">Operação sem indicações</small>
+              <div class="kpi-breakdown" id="kpiTfcBreakdown"></div>
             </article>
             <article class="kpi">
-              <span>Contratados Inbound</span>
+              <span>Total de contratados via Inbound</span>
               <strong id="kpiInbound" class="skeleton">0</strong>
               <small id="kpiInboundShare">Origem dos contratados</small>
               <div class="kpi-breakdown" id="kpiInboundChannels"></div>
@@ -979,6 +1064,7 @@
               <span>Contratados Hunting</span>
               <strong id="kpiHunting" class="skeleton">0</strong>
               <small id="kpiHuntingShare">Captação ativa</small>
+              <div class="kpi-breakdown" id="kpiHuntingBreakdown"></div>
             </article>
             <article class="kpi">
               <span>Contratados Indicação</span>
@@ -995,6 +1081,7 @@
               </div>
             </div>
             <div class="chart-box"><canvas id="closureDonutChart"></canvas></div>
+            <div class="legend-pills" id="closureLegend"></div>
           </section>
         </div>
 
@@ -1021,16 +1108,21 @@
         <div class="section-heading">
           <div>
             <h2>Custos por contratação de Inbound em vagas fechadas</h2>
-            <p>Custo médio de contratação por mídia paga.</p>
+            <p>Custo médio de contratação por mídia paga. Indicadores financeiros não são afetados pelo filtro de produto.</p>
           </div>
-          <span class="badge" id="costPeriodBadge">Acumulado</span>
+          <span class="period-pill" id="costPeriodBadge">Acumulado</span>
         </div>
 
-        <div class="kpi-grid">
+        <div class="kpi-grid kpi-grid-5">
           <article class="kpi">
             <span>Custo por contratação média (vagas fechadas)</span>
             <strong id="costHireClosedPaid" class="skeleton">R$ 0</strong>
             <small id="costHireClosedSub">Acumulado</small>
+          </article>
+          <article class="kpi">
+            <span>Custo de mídia por vaga fechada no mês</span>
+            <strong id="costMediaPerClosed" class="skeleton">R$ 0</strong>
+            <small id="costMediaPerClosedSub">Acumulado</small>
           </article>
           <article class="kpi">
             <span>Custo de contratação médio mídia paga (Executive Search)</span>
@@ -1058,6 +1150,7 @@
               </div>
             </div>
             <div class="chart-box"><canvas id="hiresChannelChart"></canvas></div>
+            <p class="chart-note">Informação aferida cruzando dados de rastreio de vagas + preenchimento do sistema.</p>
           </section>
 
           <aside class="insight-panel">
@@ -1081,8 +1174,9 @@
         <div class="section-heading">
           <div>
             <h2>Vagas que foram fechadas por Inbound</h2>
-            <p>Todas as vagas com contratação via Inbound: empresa, cargo, canal de fechamento e nº de contratações Inbound na vaga.</p>
+            <p>Veja todas as vagas que já foram fechadas por Inbound — empresa, cargo, canal de fechamento e nº de contratações Inbound na vaga.</p>
           </div>
+          <span class="period-pill" id="periodPillList">Acumulado</span>
         </div>
 
         <div class="inbound-list-summary">
@@ -1134,6 +1228,13 @@
       </section>
 
       <section class="panel" id="analysis">
+        <div class="section-heading">
+          <div>
+            <h2>Contratados por canal de divulgação</h2>
+            <p>Volume de aplicantes, finalistas e contratados por canal de Inbound, por unidade e tabela detalhada.</p>
+          </div>
+          <span class="period-pill" id="periodPillAnalysis">Acumulado</span>
+        </div>
         <div class="analysis-grid">
           <section class="chart-panel">
             <div class="chart-title">
@@ -1280,6 +1381,7 @@
     ];
 
     const PRODUCT_ORDER = ["Executive Search", "Plus", "Standard", "RH Interno"];
+    const UNIT_ORDER = ["Salesjobs", "EasyHire", "Foursales", "RPO", "RH Interno"];
 
     const PRODUCT_FILTERS = {
       total: { label: "Todos", suffix: "" },
@@ -1624,6 +1726,16 @@
         inboundHiresByUnit[item.unit] = (inboundHiresByUnit[item.unit] || 0) + 1;
       });
 
+      // Composição por unidade (aba de vagas): TFC operacional = inbound + hunting;
+      // hunting isolado por unidade. Indicações são contadas à parte.
+      const tfcByUnit = {};
+      const huntingByUnit = {};
+      contracts.forEach(item => {
+        if (item.type.group === "indication") return;
+        tfcByUnit[item.unit] = (tfcByUnit[item.unit] || 0) + 1;
+        if (item.type.group === "hunting") huntingByUnit[item.unit] = (huntingByUnit[item.unit] || 0) + 1;
+      });
+
       const channelStats = CHANNELS.map(channel => {
         const applicants = inbound.reduce((sum, row) => sum + (channel.app === null ? 0 : toNumber(row[channel.app])), 0);
         const finalists = inbound.reduce((sum, row) => sum + (channel.fin === null ? 0 : toNumber(row[channel.fin])), 0);
@@ -1674,6 +1786,8 @@
         totalContracts,
         hiresByChannel,
         inboundHiresByUnit,
+        tfcByUnit,
+        huntingByUnit,
         inboundVacancies,
         channelStats,
         totalInboundApplicants,
@@ -1726,13 +1840,39 @@
       el.classList.remove("skeleton");
     }
 
-    function makeChart(id, type, data, options = {}) {
+    // Plugin: escreve o percentual de cada fatia dentro da rosca (sem precisar de hover)
+    const donutPercentPlugin = {
+      id: "donutPercent",
+      afterDatasetsDraw(chart) {
+        const ctx = chart.ctx;
+        const meta = chart.getDatasetMeta(0);
+        const values = (chart.data.datasets[0] || {}).data || [];
+        const total = values.reduce((a, b) => a + (Number(b) || 0), 0);
+        if (!total) return;
+        ctx.save();
+        ctx.font = "800 14px Inter, ui-sans-serif, sans-serif";
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        meta.data.forEach((arc, i) => {
+          const v = Number(values[i]) || 0;
+          const p = (v / total) * 100;
+          if (p < 6) return;
+          const pos = arc.tooltipPosition();
+          ctx.fillText(`${p.toFixed(0)}%`, pos.x, pos.y);
+        });
+        ctx.restore();
+      }
+    };
+
+    function makeChart(id, type, data, options = {}, plugins = []) {
       const ctx = document.getElementById(id);
       if (!ctx) return;
       if (state.charts[id]) state.charts[id].destroy();
       state.charts[id] = new Chart(ctx, {
         type,
         data,
+        plugins,
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -1881,20 +2021,33 @@
       })).filter(row => row.applicants);
     }
 
+    function periodLabel() {
+      const month = state.selectedMonth === "Todos" ? "Acumulado" : state.selectedMonth;
+      const product = (PRODUCT_FILTERS[state.selectedProduct] || PRODUCT_FILTERS.total).label;
+      return state.selectedProduct === "total" ? month : `${month} · ${product}`;
+    }
+
+    function updatePeriodPills() {
+      const label = periodLabel();
+      ["periodPillExec", "periodPillList", "periodPillAnalysis", "costPeriodBadge"].forEach(id => setText(id, label));
+    }
+
     function renderPriorityMetrics() {
       const selectedLabel = state.selectedMonth === "Todos" ? "Acumulado" : state.selectedMonth;
       const costs = PRIORITY_COST_LABELS.map(label => kpiMetric(state.sheets.canais, label));
       const closure = closureMetrics();
+      updatePeriodPills();
 
       setText("costHireClosedPaid", fmtMoney.format(costs[3]?.value || 0));
+      setText("costMediaPerClosed", fmtMoney.format(kpiValue(state.sheets.geral, "Custo de mídia por vaga fechada no mês")));
       setText("costHireExec", fmtMoney.format(costs[4]?.value || 0));
       setText("costHireStd", fmtMoney.format(costs[5]?.value || 0));
       setText("costHirePlus", fmtMoney.format(costs[6]?.value || 0));
       setText("costHireClosedSub", selectedLabel);
+      setText("costMediaPerClosedSub", selectedLabel);
       setText("costHireExecSub", selectedLabel);
       setText("costHireStdSub", selectedLabel);
       setText("costHirePlusSub", selectedLabel);
-      setText("costPeriodBadge", selectedLabel);
       makeChart("closureDonutChart", "doughnut", {
         labels: ["Inbound", "Hunting"],
         datasets: [{
@@ -1903,9 +2056,9 @@
           borderWidth: 0
         }]
       }, {
-        cutout: "66%",
+        cutout: "62%",
         plugins: {
-          legend: { position: "bottom", labels: { boxWidth: 12, usePointStyle: true } },
+          legend: { display: false },
           tooltip: {
             callbacks: {
               label(context) {
@@ -1915,7 +2068,15 @@
             }
           }
         }
-      });
+      }, [donutPercentPlugin]);
+
+      const closureTotal = closure.inbound + closure.hunting;
+      const legendEl = document.getElementById("closureLegend");
+      if (legendEl) {
+        legendEl.innerHTML =
+          `<span><i style="background:#CE0E2D"></i>Inbound <b>${fmtInt.format(closure.inbound)}</b> (${fmtOne.format(pct(closure.inbound, closureTotal))}%)</span>`
+          + `<span><i style="background:#011E41"></i>Hunting <b>${fmtInt.format(closure.hunting)}</b> (${fmtOne.format(pct(closure.hunting, closureTotal))}%)</span>`;
+      }
 
       const productLabel = (PRODUCT_FILTERS[state.selectedProduct] || PRODUCT_FILTERS.total).label;
       const shareTrend = calculateInboundShareTrend();
@@ -1924,9 +2085,9 @@
         datasets: [{
           label: `% Inbound - ${productLabel}`,
           data: shareTrend.map(row => row.share),
-          borderColor: "#CE0E2D",
-          backgroundColor: "rgba(206, 14, 45, 0.12)",
-          pointBackgroundColor: "#CE0E2D",
+          borderColor: "#2F6FEA",
+          backgroundColor: "rgba(47, 111, 234, 0.12)",
+          pointBackgroundColor: "#2F6FEA",
           pointBorderColor: "#ffffff",
           pointBorderWidth: 2,
           pointRadius: 4,
@@ -2072,6 +2233,21 @@
       });
     }
 
+    function renderBreakdown(elId, entries) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      el.innerHTML = "";
+      if (!entries.length) {
+        el.innerHTML = `<span>Sem dados no filtro</span>`;
+        return;
+      }
+      entries.forEach(e => {
+        const chip = document.createElement("span");
+        chip.innerHTML = `${esc(e.label)} <b>${fmtInt.format(e.value)}</b>`;
+        el.appendChild(chip);
+      });
+    }
+
     function render() {
       const data = calculate();
       const selectedLabel = state.selectedMonth === "Todos" ? "Acumulado" : state.selectedMonth;
@@ -2129,6 +2305,18 @@
           inboundChannelsEl.appendChild(chip);
         }
       }
+
+      // Composição por unidade nos cards TFC (unidades + indicações) e Hunting (por unidade)
+      const orderUnits = map => {
+        const keys = Object.keys(map);
+        return [...UNIT_ORDER.filter(u => keys.includes(u)), ...keys.filter(k => !UNIT_ORDER.includes(k))]
+          .map(u => ({ label: u, value: map[u] }))
+          .filter(e => e.value > 0);
+      };
+      const tfcEntries = orderUnits(data.tfcByUnit);
+      if (closure.indications > 0) tfcEntries.push({ label: "Indicações", value: closure.indications });
+      renderBreakdown("kpiTfcBreakdown", tfcEntries);
+      renderBreakdown("kpiHuntingBreakdown", orderUnits(data.huntingByUnit));
 
       makeChart("hiresChannelChart", "bar", {
         labels: [...hireStats.map(c => c.label), "Hunting"],
