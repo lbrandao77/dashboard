@@ -1049,9 +1049,9 @@
         <div class="exec-top">
           <div class="kpi-grid secondary-overview">
             <article class="kpi">
-              <span>Contratados TFC</span>
+              <span>Contratados Geral</span>
               <strong id="kpiTfc" class="skeleton">0</strong>
-              <small id="kpiTfcShare">Operação sem indicações</small>
+              <small id="kpiTfcShare">Todas as contratações + indicações</small>
               <div class="kpi-breakdown" id="kpiTfcBreakdown"></div>
             </article>
             <article class="kpi">
@@ -1726,14 +1726,27 @@
         inboundHiresByUnit[item.unit] = (inboundHiresByUnit[item.unit] || 0) + 1;
       });
 
-      // Composição por unidade (aba de vagas): TFC operacional = inbound + hunting;
-      // hunting isolado por unidade. Indicações são contadas à parte.
-      const tfcByUnit = {};
+      // Contratados Geral (aba "Dados gerais vagas Fechadas"): todas as contratações + indicações.
+      // Regras: status "Fechada" + canal de contratação (Origem) preenchido, excluindo a empresa Localiza.
+      // Respeita os filtros de mês e produto. Composição por unidade + indicações à parte.
+      const isClosed = row => normalize(row[2]) === "fechada";
+      const isLocaliza = row => normalize(row[7]).includes("localiza");
+      const geralRows = dados.filter(row =>
+        isClosed(row)
+        && classifyOrigin(row[55]).group !== "none"
+        && !isLocaliza(row)
+        && productMatches(row)
+      );
+      const geralTotal = geralRows.length;
+      const geralByUnit = {};
       const huntingByUnit = {};
-      contracts.forEach(item => {
-        if (item.type.group === "indication") return;
-        tfcByUnit[item.unit] = (tfcByUnit[item.unit] || 0) + 1;
-        if (item.type.group === "hunting") huntingByUnit[item.unit] = (huntingByUnit[item.unit] || 0) + 1;
+      let geralIndications = 0;
+      geralRows.forEach(row => {
+        const group = classifyOrigin(row[55]).group;
+        if (group === "indication") { geralIndications += 1; return; }
+        const u = unitName(row[3]);
+        geralByUnit[u] = (geralByUnit[u] || 0) + 1;
+        if (group === "hunting") huntingByUnit[u] = (huntingByUnit[u] || 0) + 1;
       });
 
       const channelStats = CHANNELS.map(channel => {
@@ -1786,7 +1799,9 @@
         totalContracts,
         hiresByChannel,
         inboundHiresByUnit,
-        tfcByUnit,
+        geralTotal,
+        geralByUnit,
+        geralIndications,
         huntingByUnit,
         inboundVacancies,
         channelStats,
@@ -2261,16 +2276,16 @@
       //   Contratados Hunting -> TFC - Inbound (derivado)
       //   Contratados Indicação -> contagem de indicações na aba de vagas (única exceção permitida)
       const closure = closureMetrics();
-      const tfcContracts = closure.tfc;
-      const totalWithIndication = closure.tfc + closure.indications;
-      setText("kpiTfc", fmtInt.format(closure.tfc));
-      setText("kpiTfcShare", `${fmtOne.format(pct(closure.tfc, totalWithIndication))}% sem indicações - ${selectedLabel}`);
+      // Contratados Geral vem da aba de vagas (status Fechada + canal preenchido, sem Localiza).
+      const geralTotal = data.geralTotal;
+      setText("kpiTfc", fmtInt.format(geralTotal));
+      setText("kpiTfcShare", `${fmtOne.format(pct(geralTotal - data.geralIndications, geralTotal))}% sem indicações - ${selectedLabel}`);
       setText("kpiInbound", fmtInt.format(closure.inbound));
-      setText("kpiInboundShare", `${fmtOne.format(pct(closure.inbound, closure.tfc))}% dos contratados TFC - ${selectedLabel}`);
+      setText("kpiInboundShare", `${fmtOne.format(pct(closure.inbound, closure.tfc))}% de Inbound + Hunting - ${selectedLabel}`);
       setText("kpiHunting", fmtInt.format(closure.hunting));
-      setText("kpiHuntingShare", `${fmtOne.format(pct(closure.hunting, closure.tfc))}% dos contratados TFC - ${selectedLabel}`);
+      setText("kpiHuntingShare", `${fmtOne.format(pct(closure.hunting, closure.tfc))}% de Inbound + Hunting - ${selectedLabel}`);
       setText("kpiIndication", fmtInt.format(closure.indications));
-      setText("kpiIndicationShare", `${fmtOne.format(pct(closure.indications, totalWithIndication))}% do total com indicação - ${selectedLabel}`);
+      setText("kpiIndicationShare", `${fmtOne.format(pct(closure.indications, geralTotal))}% do Contratado Geral - ${selectedLabel}`);
       setText("kpiInboundTime", `${fmtOne.format(data.avgInboundTime)}d`);
       setText("kpiHuntingTime", `${fmtOne.format(data.avgHuntingTime)}d`);
       setText("kpiCostHire", fmtMoney.format(data.costPerHire));
@@ -2313,8 +2328,8 @@
           .map(u => ({ label: u, value: map[u] }))
           .filter(e => e.value > 0);
       };
-      const tfcEntries = orderUnits(data.tfcByUnit);
-      if (closure.indications > 0) tfcEntries.push({ label: "Indicações", value: closure.indications });
+      const tfcEntries = orderUnits(data.geralByUnit);
+      if (data.geralIndications > 0) tfcEntries.push({ label: "Indicações", value: data.geralIndications });
       renderBreakdown("kpiTfcBreakdown", tfcEntries);
       renderBreakdown("kpiHuntingBreakdown", orderUnits(data.huntingByUnit));
 
